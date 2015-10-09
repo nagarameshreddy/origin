@@ -90,6 +90,9 @@ func (c *MasterConfig) RunPersistentVolumeController(recyclerImageName string) {
 	allPlugins := []volume.VolumePlugin{}
 	allPlugins = append(allPlugins, host_path.ProbeVolumePlugins(hostPathConfig)...)
 	allPlugins = append(allPlugins, nfs.ProbeVolumePlugins(nfsConfig)...)
+	allPlugins = append(allPlugins, aws_ebs.ProbeVolumePlugins()...)
+	allPlugins = append(allPlugins, gce_pd.ProbeVolumePlugins()...)
+	allPlugins = append(allPlugins, cinder.ProbeVolumePlugins()...)
 
 	client := volumeclaimbinder.NewControllerClient(c.KubeClient)
 	provisioners := newVolumeProvisionersForCloud(c.CloudProvider)
