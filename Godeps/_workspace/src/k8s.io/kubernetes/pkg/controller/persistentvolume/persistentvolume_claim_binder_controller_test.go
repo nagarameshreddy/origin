@@ -199,7 +199,7 @@ func TestBindingWithExamples(t *testing.T) {
 	}
 
 	plugMgr := volume.VolumePluginMgr{}
-	plugMgr.InitPlugins(host_path.ProbeRecyclableVolumePlugins(newMockRecycler, volume.VolumeConfig{}), volume.NewFakeVolumeHost("/tmp/fake", nil, nil))
+	plugMgr.InitPlugins(host_path.ProbeRecyclableVolumePlugins(volume.NewFakeRecycler, volume.VolumeConfig{}), volume.NewFakeVolumeHost("/tmp/fake", nil, nil))
 
 	recycler := &PersistentVolumeRecycler{
 		kubeClient: client,

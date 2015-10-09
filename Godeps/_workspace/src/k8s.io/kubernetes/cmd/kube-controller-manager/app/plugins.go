@@ -17,9 +17,9 @@ limitations under the License.
 package app
 
 import (
-	// This file exists to force the desired plugin implementations to be linked.
-	// This should probably be part of some configuration fed into the build for a
-	// given binary target.
+// This file exists to force the desired plugin implementations to be linked.
+// This should probably be part of some configuration fed into the build for a
+// given binary target.
 
 	//Cloud providers
 	_ "k8s.io/kubernetes/pkg/cloudprovider/providers"

@@ -129,6 +129,10 @@ func (plugin *FakeVolumePlugin) NewRecycler(spec *Spec) (Recycler, error) {
 	return &fakeRecycler{"/attributesTransferredFromSpec"}, nil
 }
 
+func (plugin *FakeVolumePlugin) NewDeleter(spec *Spec) (Deleter, error) {
+	return &FakeDeleter{"/attributesTransferredFromSpec"}, nil
+}
+
 func (plugin *FakeVolumePlugin) GetAccessModes() []api.PersistentVolumeAccessMode {
 	return []api.PersistentVolumeAccessMode{}
 }
@@ -176,11 +180,24 @@ func (fr *fakeRecycler) GetPath() string {
 	return fr.path
 }
 
-func NewFakeRecycler(spec *Spec, host VolumeHost, config VolumeConfig) (Recycler, error) {
+func NewFakeRecycler(spec *Spec, host VolumeHost, volumeConfig VolumeConfig) (Recycler, error) {
 	if spec.PersistentVolume == nil || spec.PersistentVolume.Spec.HostPath == nil {
 		return nil, fmt.Errorf("fakeRecycler only supports spec.PersistentVolume.Spec.HostPath")
 	}
 	return &fakeRecycler{
 		path: spec.PersistentVolume.Spec.HostPath.Path,
 	}, nil
+}
+
+type FakeDeleter struct {
+	path string
+}
+
+func (fd *FakeDeleter) Delete() error {
+	// nil is success, else error
+	return nil
+}
+
+func (fd *FakeDeleter) GetPath() string {
+	return fd.path
 }
