@@ -21,12 +21,19 @@ import (
 // This should probably be part of some configuration fed into the build for a
 // given binary target.
 
-	//Cloud providers
+//Cloud providers
+	"k8s.io/kubernetes/pkg/cloudprovider"
 	_ "k8s.io/kubernetes/pkg/cloudprovider/providers"
+	"k8s.io/kubernetes/pkg/cloudprovider/providers/aws"
+	"k8s.io/kubernetes/pkg/cloudprovider/providers/gce"
+	"k8s.io/kubernetes/pkg/cloudprovider/providers/openstack"
 
-	// Volume plugins
+// Volume plugins
 	"k8s.io/kubernetes/pkg/util/io"
 	"k8s.io/kubernetes/pkg/volume"
+	"k8s.io/kubernetes/pkg/volume/aws_ebs"
+	"k8s.io/kubernetes/pkg/volume/cinder"
+	"k8s.io/kubernetes/pkg/volume/gce_pd"
 	"k8s.io/kubernetes/pkg/volume/host_path"
 	"k8s.io/kubernetes/pkg/volume/nfs"
 
@@ -66,7 +73,36 @@ func ProbeRecyclableVolumePlugins(flags VolumeConfigFlags) []volume.VolumePlugin
 	}
 	allPlugins = append(allPlugins, nfs.ProbeVolumePlugins(nfsConfig)...)
 
+	allPlugins = append(allPlugins, aws_ebs.ProbeVolumePlugins()...)
+	allPlugins = append(allPlugins, gce_pd.ProbeVolumePlugins()...)
+	allPlugins = append(allPlugins, cinder.ProbeVolumePlugins()...)
+
 	return allPlugins
+}
+
+// NewVolumeProvisionersForCloud maps a cloud provider to a specific volume plugin.
+func NewVolumeProvisionersForCloud(cloud cloudprovider.Interface) map[string]volume.ProvisionableVolumePlugin {
+	var provisioner volume.VolumePlugin
+	switch {
+	case cloud != nil && cloud.ProviderName() == aws_cloud.ProviderName:
+		provisioner = aws_ebs.ProbeVolumePlugins()[0]
+	case cloud != nil && cloud.ProviderName() == gce_cloud.ProviderName:
+		provisioner = gce_pd.ProbeVolumePlugins()[0]
+	case cloud != nil && cloud.ProviderName() == openstack.ProviderName:
+		provisioner = cinder.ProbeVolumePlugins()[0]
+	}
+
+	plugins := map[string]volume.ProvisionableVolumePlugin{
+		"experimental-hostpath-testing-only": host_path.ProbeVolumePlugins(volume.VolumeConfig{})[0].(volume.ProvisionableVolumePlugin),
+	}
+
+	if provisioner != nil {
+		plugins["gold"] = provisioner.(volume.ProvisionableVolumePlugin)
+		plugins["silver"] = provisioner.(volume.ProvisionableVolumePlugin)
+		plugins["bronze"] = provisioner.(volume.ProvisionableVolumePlugin)
+	}
+
+	return plugins
 }
 
 // attemptToLoadRecycler tries decoding a pod from a filepath for use as a recycler for a volume.

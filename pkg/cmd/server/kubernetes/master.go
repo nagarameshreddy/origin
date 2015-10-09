@@ -12,6 +12,10 @@ import (
 	kapi "k8s.io/kubernetes/pkg/api"
 	"k8s.io/kubernetes/pkg/client/record"
 	client "k8s.io/kubernetes/pkg/client/unversioned"
+	"k8s.io/kubernetes/pkg/cloudprovider"
+	"k8s.io/kubernetes/pkg/cloudprovider/providers/aws"
+	"k8s.io/kubernetes/pkg/cloudprovider/providers/gce"
+	"k8s.io/kubernetes/pkg/cloudprovider/providers/openstack"
 	endpointcontroller "k8s.io/kubernetes/pkg/controller/endpoint"
 	namespacecontroller "k8s.io/kubernetes/pkg/controller/namespace"
 	nodecontroller "k8s.io/kubernetes/pkg/controller/node"
@@ -21,6 +25,9 @@ import (
 	"k8s.io/kubernetes/pkg/master"
 	"k8s.io/kubernetes/pkg/util"
 	"k8s.io/kubernetes/pkg/volume"
+	"k8s.io/kubernetes/pkg/volume/aws_ebs"
+	"k8s.io/kubernetes/pkg/volume/cinder"
+	"k8s.io/kubernetes/pkg/volume/gce_pd"
 	"k8s.io/kubernetes/pkg/volume/host_path"
 	"k8s.io/kubernetes/pkg/volume/nfs"
 	"k8s.io/kubernetes/plugin/pkg/scheduler"
@@ -63,13 +70,7 @@ func (c *MasterConfig) RunNamespaceController() {
 	namespaceController.Run()
 }
 
-// RunPersistentVolumeClaimBinder starts the Kubernetes Persistent Volume Claim Binder
-func (c *MasterConfig) RunPersistentVolumeClaimBinder() {
-	binder := volumeclaimbinder.NewPersistentVolumeClaimBinder(c.KubeClient, c.ControllerManager.PVClaimBinderSyncPeriod)
-	binder.Run()
-}
-
-func (c *MasterConfig) RunPersistentVolumeClaimRecycler(recyclerImageName string) {
+func (c *MasterConfig) RunPersistentVolumeController(recyclerImageName string) {
 	defaultScrubPod := volume.NewPersistentVolumeRecyclerPodTemplate()
 	defaultScrubPod.Spec.Containers[0].Image = recyclerImageName
 	defaultScrubPod.Spec.Containers[0].Command = []string{"/usr/share/openshift/scripts/volumes/recycler.sh"}
@@ -90,11 +91,39 @@ func (c *MasterConfig) RunPersistentVolumeClaimRecycler(recyclerImageName string
 	allPlugins = append(allPlugins, host_path.ProbeVolumePlugins(hostPathConfig)...)
 	allPlugins = append(allPlugins, nfs.ProbeVolumePlugins(nfsConfig)...)
 
-	recycler, err := volumeclaimbinder.NewPersistentVolumeRecycler(c.KubeClient, c.ControllerManager.PVClaimBinderSyncPeriod, allPlugins)
+	client := volumeclaimbinder.NewControllerClient(c.KubeClient)
+	provisioners := newVolumeProvisionersForCloud(c.CloudProvider)
+	controller, err := volumeclaimbinder.NewPersistentVolumeController(client, c.ControllerManager.PVClaimBinderSyncPeriod, allPlugins, provisioners, c.CloudProvider)
 	if err != nil {
-		glog.Fatalf("Could not start Persistent Volume Recycler: %+v", err)
+		glog.Fatalf("Could not start Persistent Volume Controller: %+v", err)
 	}
-	recycler.Run()
+	controller.Run()
+}
+
+// TODO:  put this in the binary somewhere.  this func was not able to be found in kube-ctrl-manager/plugins.go
+// newVolumeProvisionersForCloud maps a cloud provider to a specific volume plugin.
+func newVolumeProvisionersForCloud(cloud cloudprovider.Interface) map[string]volume.ProvisionableVolumePlugin {
+	var provisioner volume.VolumePlugin
+	switch {
+	case cloud != nil && cloud.ProviderName() == aws_cloud.ProviderName:
+		provisioner = aws_ebs.ProbeVolumePlugins()[0]
+	case cloud != nil && cloud.ProviderName() == gce_cloud.ProviderName:
+		provisioner = gce_pd.ProbeVolumePlugins()[0]
+	case cloud != nil && cloud.ProviderName() == openstack.ProviderName:
+		provisioner = cinder.ProbeVolumePlugins()[0]
+	}
+
+	plugins := map[string]volume.ProvisionableVolumePlugin{
+		"experimental-hostpath-testing-only": host_path.ProbeVolumePlugins(volume.VolumeConfig{})[0].(volume.ProvisionableVolumePlugin),
+	}
+
+	if provisioner != nil {
+		plugins["gold"] = provisioner.(volume.ProvisionableVolumePlugin)
+		plugins["silver"] = provisioner.(volume.ProvisionableVolumePlugin)
+		plugins["bronze"] = provisioner.(volume.ProvisionableVolumePlugin)
+	}
+
+	return plugins
 }
 
 // RunReplicationController starts the Kubernetes replication controller sync loop

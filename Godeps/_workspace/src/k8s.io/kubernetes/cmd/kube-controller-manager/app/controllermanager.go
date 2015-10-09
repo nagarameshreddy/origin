@@ -270,14 +270,11 @@ func (s *CMServer) Run(_ []string) error {
 		horizontalPodAutoscalerController.Run(s.HorizontalPodAutoscalerSyncPeriod)
 	}
 
-	pvclaimBinder := volumeclaimbinder.NewPersistentVolumeClaimBinder(kubeClient, s.PVClaimBinderSyncPeriod)
-	pvclaimBinder.Run()
-
-	pvRecycler, err := volumeclaimbinder.NewPersistentVolumeRecycler(kubeClient, s.PVClaimBinderSyncPeriod, ProbeRecyclableVolumePlugins(s.VolumeConfigFlags))
+	pvController, err := persistentvolumecontroller.NewPersistentVolumeController(persistentvolumecontroller.NewControllerClient(kubeClient), s.PVClaimBinderSyncPeriod, ProbeRecyclableVolumePlugins(s.VolumeConfigFlags), NewVolumeProvisionersForCloud(cloud), cloud)
 	if err != nil {
-		glog.Fatalf("Failed to start persistent volume recycler: %+v", err)
+		glog.Fatalf("Failed to start persistent volume controller: %+v", err)
 	}
-	pvRecycler.Run()
+	pvController.Run()
 
 	var rootCA []byte
 
