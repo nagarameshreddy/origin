@@ -407,7 +407,8 @@ func (d *awsElasticBlockStoreDeleter) Delete() error {
 
 type awsElasticBlockStoreCreater struct {
 	*awsElasticBlockStore
-	options volume.VolumeOptions
+	options   volume.VolumeOptions
+	namespace string
 }
 
 var _ volume.Creater = &awsElasticBlockStoreCreater{}

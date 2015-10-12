@@ -136,7 +136,9 @@ func (util *AWSDiskUtil) CreateVolume(c *awsElasticBlockStoreCreater) (string, i
 	volSize := int((c.options.Capacity.Value() + mega - 1) / mega)
 	volSpec := &aws_cloud.VolumeOptions{
 		CapacityMB: volSize,
+		Tags:       c.options.CloudTags,
 	}
+
 	name, err := cloud.(*aws_cloud.AWSCloud).CreateVolume(volSpec)
 	if err != nil {
 		glog.V(2).Infof("Error creating AWS EBS volume: %v", err)

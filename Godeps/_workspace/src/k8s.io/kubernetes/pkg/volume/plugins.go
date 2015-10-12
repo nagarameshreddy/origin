@@ -50,6 +50,8 @@ type VolumeOptions struct {
 	PersistentVolumeReclaimPolicy api.PersistentVolumeReclaimPolicy
 	// Quality of Service tier requested by the user
 	QOSTier string
+	// Tags to attach to the real volume in the cloud provider - e.g. AWS EBS
+	CloudTags *map[string]string
 }
 
 // VolumePlugin is an interface to volume plugins that can be used on a
