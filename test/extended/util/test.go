@@ -381,7 +381,6 @@ var (
 
 			`SSH`,                // TRIAGE
 			`SELinux relabeling`, // https://github.com/openshift/origin/issues/7287 still broken
-			`Volumes CephFS`,     // permission denied, selinux?
 
 			`should support inline execution and attach`, // https://bugzilla.redhat.com/show_bug.cgi?id=1624041
 
