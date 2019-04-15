@@ -362,7 +362,6 @@ var (
 		// tests that are known broken and need to be fixed upstream or in openshift
 		// always add an issue here
 		"[Disabled:Broken]": {
-			`\[Feature:BlockVolume\]`,                                        // directory failure https://bugzilla.redhat.com/show_bug.cgi?id=1622193
 			`\[Feature:Example\]`,                                            // has cleanup issues
 			`mount an API token into pods`,                                   // We add 6 secrets, not 1
 			`ServiceAccounts should ensure a single API token exists`,        // We create lots of secrets
