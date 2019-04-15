@@ -359,18 +359,17 @@ var (
 		// tests that are known broken and need to be fixed upstream or in openshift
 		// always add an issue here
 		"[Disabled:Broken]": {
-			`\[Feature:Example\]`,                                            // has cleanup issues
-			`mount an API token into pods`,                                   // We add 6 secrets, not 1
-			`ServiceAccounts should ensure a single API token exists`,        // We create lots of secrets
-			`should test kube-proxy`,                                         // needs 2 nodes
-			`unchanging, static URL paths for kubernetes api services`,       // the test needs to exclude URLs that are not part of conformance (/logs)
-			"PersistentVolumes NFS when invoking the Recycle reclaim policy", // failing for some reason
-			`should propagate mounts to the host`,                            // https://github.com/openshift/origin/issues/18931
-			`Simple pod should handle in-cluster config`,                     // kubectl cp is not preserving executable bit
-			`Services should be able to up and down services`,                // we don't have wget installed on nodes
-			`Network should set TCP CLOSE_WAIT timeout`,                      // possibly some difference between ubuntu and fedora
-			`should allow ingress access on one named port`,                  // broken even with network policy on
-			`should answer endpoint and wildcard queries for the cluster`,    // currently not supported by dns operator https://github.com/openshift/cluster-dns-operator/issues/43
+			`\[Feature:Example\]`,                                         // has cleanup issues
+			`mount an API token into pods`,                                // We add 6 secrets, not 1
+			`ServiceAccounts should ensure a single API token exists`,     // We create lots of secrets
+			`should test kube-proxy`,                                      // needs 2 nodes
+			`unchanging, static URL paths for kubernetes api services`,    // the test needs to exclude URLs that are not part of conformance (/logs)
+			`should propagate mounts to the host`,                         // https://github.com/openshift/origin/issues/18931
+			`Simple pod should handle in-cluster config`,                  // kubectl cp is not preserving executable bit
+			`Services should be able to up and down services`,             // we don't have wget installed on nodes
+			`Network should set TCP CLOSE_WAIT timeout`,                   // possibly some difference between ubuntu and fedora
+			`should allow ingress access on one named port`,               // broken even with network policy on
+			`should answer endpoint and wildcard queries for the cluster`, // currently not supported by dns operator https://github.com/openshift/cluster-dns-operator/issues/43
 
 			`\[NodeFeature:Sysctls\]`, // needs SCC support
 
@@ -390,19 +389,13 @@ var (
 
 			`\[Feature:Volumes\]`,    // storage team to investigate it post-rebase
 			`\[Driver: csi-hostpath`, // storage team to investigate it post-rebase. @hekumar
-			// BlockVolume tests that need kubelet 1.13
-			`\[Driver: nfs\] \[Testpattern: Pre-provisioned PV \(block volmode\)\] volumeMode should fail to create pod by failing to mount volume`,
-			`\[Driver: aws\] \[Testpattern: Dynamic PV \(block volmode\)\] volumeMode should create sc, pod, pv, and pvc, read/write to the pv, and delete all created resources`,
 
 			// TODO: the following list of tests is disabled temporarily due to the fact
 			// that we're running kubelet 1.11 and these require 1.12. We will remove them
 			// post-rebase
 			`\[Feature:NodeAuthenticator\]`,
 			`PreemptionExecutionPath`,
-			`\[Volume type: blockfswithoutformat\]`,
 			`CSI Volumes CSI attach test using HostPath driver`,
-			`CSI Volumes CSI plugin test using CSI driver: hostPath`,
-			`Volume metrics should create volume metrics in Volume Manager`,
 
 			`Kubelet when scheduling a busybox Pod with hostAliases should write entries to /etc/hosts`, // https://bugzilla.redhat.com/show_bug.cgi?id=1695278
 		},
